@@ -9,15 +9,18 @@ from mip import *
 from functools import reduce
 from itertools import combinations
 from operator import mul
+from scipy.optimize import least_squares
+from hyperopt import fmin, tpe, space_eval, hp
 
-critical_ratio = 4.26
+critical_ratio = 4.0
 REPEATS = 5
 TIMEOUT = 2
-MIN_N = 10
-MAX_N = 50
+MIN_N = 3
+MAX_N = 100
 
 # https://www.cs.ubc.ca/~hoos/SATLIB/Benchmarks/SAT/RND3SAT/descr.html#:~:text=One%20particularly%20interesting%20property%20of%20uniform%20Random-3-SAT%20is,systematically%20increasing%20%28or%20decreasing%29%20the%20number%20of%20kclauses
 # We vigorously handwave the phase transition for 3sat
+
 
 """
 Benchmark various free ways to solve 3sat
@@ -78,6 +81,33 @@ def canonical_solver(sat_instance):
 def assignment_from_num(i, num):
     return [bool((i >> index) & 1) for index in range(num)]
 
+def nonconvex_local(sat_instance):
+    n = get_num_symbols(sat_instance)
+    start = [int(random.random() < .5) for i in range(n)]
+    def cost(x):
+        return [
+            min(int(1 - x[variable]) if is_true else int(x[variable]) for variable, is_true in clause)
+            for clause in sat_instance
+        ]
+
+    result = least_squares(cost, start, bounds = ([0] * n, [1] * n))
+
+    return result.cost < 1
+
+def hyperopt(sat_instance):
+    n = get_num_symbols(sat_instance)
+    def cost(x):
+        return sum([
+            min(int(1 - x[variable]) if is_true else int(x[variable]) for variable, is_true in clause)
+            for clause in sat_instance
+        ])
+    c = 2.1
+    best = fmin(fn=cost,
+                space=[hp.randint('x' + str(i), 0, 2) for i in range(n)],
+                algo=tpe.suggest,
+                max_evals = 2 * int(n ** c))
+
+    return cost(list(best.values())) < 1
 
 def brute_force(sat_instance):
     """
@@ -91,7 +121,9 @@ def brute_force(sat_instance):
     return any(evaluate(sat_instance, s) for s in all_instances(get_num_symbols(sat_instance)))
 
 def do_benchmark() -> pd.DataFrame:
-    solution_strategies = {"canonical":canonical_solver, "ilp": do_cbc_solver, "greedy": greedy_sat, "crank_algorithm": crank_algorithm, "local_sat": local_sat}
+    solution_strategies = {"canonical":canonical_solver, "ilp": do_cbc_solver, "schonig": schonig,
+                           "crank_algorithm": crank_algorithm, "local_sat": local_sat,
+                           "brute_force": brute_force, "nonconvex_local": nonconvex_local, "hyperopt": hyperopt}
     hit_cutoffs = set()
     ns = [int(a / REPEATS) for a in range(MIN_N * REPEATS, MAX_N * REPEATS, 1)]
     cols = collections.defaultdict(list)
@@ -140,33 +172,8 @@ def do_cbc_solver(sat_instance):
 
     return status == OptimizationStatus.OPTIMAL or status == OptimizationStatus.FEASIBLE
 
-def greedy_sat(sat_instance):
-    """
-    Schonig's algorithm
-    :param sat_instance:
-    :return:
-    """
-    n = get_num_symbols(sat_instance)
 
-    def attempt_greedy_walk():
-        randomized_assignment = [random.random() < .5 for i in range(n)]
-        c = len(sat_instance)
-        for i in range(5 * c):
-            evaluation = evaluate(sat_instance, randomized_assignment)
-            if evaluation:
-                return True
-            for clause in sat_instance:
-                if not evaluate([clause], randomized_assignment):
-                    var, _ = random.choice(clause)
-                    randomized_assignment[var] = not randomized_assignment[var]
-                    break
-
-        return False
-
-
-    return any(attempt_greedy_walk() for i in range(10))
-
-def greedy_sat(sat_instance):
+def schonig(sat_instance):
     """
     Schonig's algorithm
     :param sat_instance:
@@ -213,7 +220,7 @@ def local_sat(sat_instance):
     def attempt_greedy_walk():
         randomized_assignment = [random.random() < .5 for i in range(n)]
         c = len(sat_instance)
-        for i in range(3 * c):
+        for i in range(5 * c):
             evaluation = evaluate(sat_instance, randomized_assignment)
             if evaluation:
                 return True
@@ -226,7 +233,7 @@ def local_sat(sat_instance):
         return False
 
 
-    return any(attempt_greedy_walk() for i in range(20))
+    return any(attempt_greedy_walk() for i in range(30))
 
 
 def crank_algorithm(sat_instance):
@@ -244,7 +251,7 @@ def crank_algorithm(sat_instance):
     if M % 2:
         M = M - 1
 
-    M = 2
+    M = 4
 
     current_assignment = [int(M / 2) for i in range(n)]
 
@@ -263,7 +270,7 @@ def crank_algorithm(sat_instance):
     def worst_clause_and_val():
         return min(((clause, evaluate_fractional_clause(clause, current_assignment)) for clause in sat_instance), key = lambda a: (a[1], random.random()))
 
-    for i in range(10 * n * n * M * M):
+    for i in range(20 * n * n * M * M):
         assert all(var <= M for var in current_assignment)
         worst_clause, worst_clause_truth_value = worst_clause_and_val()
         if worst_clause_truth_value == 1:
@@ -282,8 +289,8 @@ benchmark_df = do_benchmark()
 
 # print(do_cbc_solver(create_random_ksat(10, 100)))
 
-benchmark_df.to_csv("data.csv", index = False)
-benchmark_df.groupby("n").mean().to_csv("data_grouped.csv", index = True)
+benchmark_df.to_csv("data", index = False)
+benchmark_df.groupby("n").mean().to_csv("data_grouped", index = True)
 
 pd.set_option("display.max_rows", None, "display.max_columns", None, "display.width", 1000)
 print(benchmark_df)

@@ -12,9 +12,9 @@ from operator import mul
 from scipy.optimize import least_squares
 from hyperopt import fmin, tpe, space_eval, hp
 
-critical_ratio = 4.0
-REPEATS = 5
-TIMEOUT = 2
+critical_ratio = 4.26
+REPEATS = 20
+TIMEOUT = 10
 MIN_N = 3
 MAX_N = 100
 

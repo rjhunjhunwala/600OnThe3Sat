@@ -83,7 +83,7 @@ def assignment_from_num(i, num):
 
 def nonconvex_local(sat_instance):
     n = get_num_symbols(sat_instance)
-    start = [int(random.random() < .5) for i in range(n)]
+
     def cost(x):
         return [sum(
             min(int(1 - x[variable]) if is_true else int(x[variable]) for variable, is_true in clause)
@@ -91,9 +91,17 @@ def nonconvex_local(sat_instance):
         )
         ]
 
-    result = least_squares(cost, start, bounds = ([0] * n, [1] * n))
+    results = []
 
-    return result.cost == 0
+    for i in range(10):
+        start = [int(random.random() < .5) for i in range(n)]
+        result = least_squares(cost, start, bounds = ([0] * n, [1] * n))
+
+        guessed_output = [int(a >= 0.5) for a in result.x]
+
+        results.append(evaluate(sat_instance, guessed_output))
+
+    return any(results)
 
 def hyperopt(sat_instance):
     n = get_num_symbols(sat_instance)
@@ -134,18 +142,13 @@ def do_benchmark() -> pd.DataFrame:
         new_row["n"] = n
         instance = create_random_ksat(n, int(n * critical_ratio))
         for solution_name, solution in solution_strategies.items():
-            if solution_name not in hit_cutoffs:
-                start = time.time()
-                new_row[solution_name] = solution(instance)
-                end = time.time()
-                new_time = end - start
-                new_row[solution_name + "_time"] = new_time
-                if new_time > TIMEOUT:
-                    hit_cutoffs.add(solution_name)
-            else:
-                new_row[solution_name] = float("NaN")
-                new_row[solution_name + "_time"] = float("NaN")
-
+            start = time.time()
+            new_row[solution_name] = solution(instance) if solution_name not in hit_cutoffs else False
+            end = time.time()
+            new_time = end - start
+            new_row[solution_name + "_time"] = new_time
+            if new_time > TIMEOUT:
+                hit_cutoffs.add(solution_name)
         right_solution = new_row["canonical"]
 
         for solution_name in solution_strategies:

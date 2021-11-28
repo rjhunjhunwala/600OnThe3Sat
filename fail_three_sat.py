@@ -12,8 +12,8 @@ from operator import mul
 from scipy.optimize import least_squares
 from hyperopt import fmin, tpe, space_eval, hp
 
-critical_ratio = 4.26
-REPEATS = 20
+critical_ratio = 4.4
+REPEATS = 5
 TIMEOUT = 10
 MIN_N = 3
 MAX_N = 100
@@ -85,14 +85,15 @@ def nonconvex_local(sat_instance):
     n = get_num_symbols(sat_instance)
     start = [int(random.random() < .5) for i in range(n)]
     def cost(x):
-        return [
+        return [sum(
             min(int(1 - x[variable]) if is_true else int(x[variable]) for variable, is_true in clause)
             for clause in sat_instance
+        )
         ]
 
     result = least_squares(cost, start, bounds = ([0] * n, [1] * n))
 
-    return result.cost < 1
+    return result.cost == 0
 
 def hyperopt(sat_instance):
     n = get_num_symbols(sat_instance)

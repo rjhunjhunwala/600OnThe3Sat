@@ -22,14 +22,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/fail_three_sat.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1649">
-              <caret line="97" column="74" selection-start-line="97" selection-start-column="74" selection-end-line="97" selection-end-column="74" />
-              <folding>
-                <element signature="e#0#13#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="136">
+              <caret line="8" column="18" lean-forward="true" selection-end-line="302" selection-end-column="21" />
             </state>
           </provider>
         </entry>
@@ -84,7 +81,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/time.png">
           <provider selected="true" editor-type-id="images" />
         </entry>
@@ -198,12 +195,12 @@
       <workItem from="1636512358330" duration="3512000" />
       <workItem from="1636669509380" duration="5865000" />
       <workItem from="1636848583163" duration="16454000" />
-      <workItem from="1637867144985" duration="22091000" />
+      <workItem from="1637867144985" duration="23208000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="62619000" />
+    <option name="totallyTimeSpent" value="63736000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
@@ -248,16 +245,6 @@
             <caret line="6" selection-start-line="6" selection-end-line="6" />
           </first_editor>
           <second_editor />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/fail_three_sat.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1649">
-          <caret line="97" column="74" selection-start-line="97" selection-start-column="74" selection-end-line="97" selection-end-column="74" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -309,6 +296,13 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/time.png">
       <provider selected="true" editor-type-id="images" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fail_three_sat.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="136">
+          <caret line="8" column="18" lean-forward="true" selection-end-line="302" selection-end-column="21" />
+        </state>
+      </provider>
     </entry>
   </component>
 </project>

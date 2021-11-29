@@ -9,14 +9,14 @@ from mip import *
 from functools import reduce
 from itertools import combinations
 from operator import mul
-from scipy.optimize import least_squares
+from scipy.optimize import minimize
 from hyperopt import fmin, tpe, space_eval, hp
 
 critical_ratio = 4.4
-REPEATS = 5
-TIMEOUT = 10
+REPEATS = 10
+TIMEOUT = 20
 MIN_N = 3
-MAX_N = 100
+MAX_N = 1000
 
 # https://www.cs.ubc.ca/~hoos/SATLIB/Benchmarks/SAT/RND3SAT/descr.html#:~:text=One%20particularly%20interesting%20property%20of%20uniform%20Random-3-SAT%20is,systematically%20increasing%20%28or%20decreasing%29%20the%20number%20of%20kclauses
 # We vigorously handwave the phase transition for 3sat
@@ -95,7 +95,7 @@ def nonconvex_local(sat_instance):
 
     for i in range(10):
         start = [int(random.random() < .5) for i in range(n)]
-        result = least_squares(cost, start, bounds = ([0] * n, [1] * n))
+        result = minimize(cost, start, bounds = [(0, 1) for i in range(n)])
 
         guessed_output = [int(a >= 0.5) for a in result.x]
 
